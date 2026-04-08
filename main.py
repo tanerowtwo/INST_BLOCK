@@ -6,7 +6,7 @@ api_id = 123456
 api_hash = "your_api_hash"
 session = "YOUR_STRING_SESSION"
 
-FRIEND_ID = 123456789
+FRIEND_ID = 1684236189
 
 client = TelegramClient(StringSession(session), api_id, api_hash)
 
