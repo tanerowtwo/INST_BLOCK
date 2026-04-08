@@ -7,8 +7,9 @@ from aiohttp import web
 api_id = int(os.environ["API_ID"])
 api_hash = os.environ["API_HASH"]
 string_session = os.environ["STRING_SESSION"]
-FRIEND_ID = int(os.environ["FRIEND_ID"])
 
+# список друзей
+FRIEND_IDS = list(map(int, os.environ.get("FRIEND_IDS", "").split(",")))
 
 # === HTTP сервер ===
 async def handle(request):
@@ -19,7 +20,11 @@ async def web_server():
     app.router.add_get("/", handle)
     runner = web.AppRunner(app)
     await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", int(os.environ.get("PORT", 8080)))
+    site = web.TCPSite(
+        runner,
+        "0.0.0.0",
+        int(os.environ.get("PORT", 8080))
+    )
     await site.start()
     print("🌐 Web server started")
 
@@ -35,19 +40,22 @@ async def main():
 
             sender = await event.get_sender()
 
-            if sender.id != FRIEND_ID:
+            # фильтр по списку друзей
+            if sender.id not in FRIEND_IDS:
                 return
 
             text = (event.message.message or "").lower()
 
+            # фильтр instagram
             if "instagram.com" in text or "instagr.am" in text:
                 await asyncio.sleep(0.3)
                 await event.delete()
-                print("❌ Удалено сообщение с Instagram")
+                print(f"❌ Удалено сообщение от {sender.id}: {text}")
 
         except Exception as e:
             print(f"⚠️ Ошибка: {e}")
 
+    print("🚀 Starting client...")
     await client.start()
     print("🤖 Бот запущен")
 
