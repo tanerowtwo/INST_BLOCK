@@ -8,7 +8,9 @@ from aiohttp import web
 api_id = int(os.environ["API_ID"])
 api_hash = os.environ["API_HASH"]
 string_session = os.environ["STRING_SESSION"]
-FRIEND_ID = int(os.environ.get("FRIEND_ID", "0"))
+
+# список друзей
+FRIEND_IDS = list(map(int, os.environ.get("FRIEND_IDS", "").split(","))) if os.environ.get("FRIEND_IDS") else []
 
 # === HTTP сервер ===
 async def handle(request):
@@ -29,7 +31,7 @@ async def web_server():
 
 # === TELEGRAM ЛОГИКА ===
 async def start_telegram():
-    while True:  # автоперезапуск если упадёт
+    while True:
         try:
             print("🚀 Starting client...")
 
@@ -47,7 +49,8 @@ async def start_telegram():
 
                     sender = await event.get_sender()
 
-                    if sender.id != FRIEND_ID:
+                    # проверка по списку
+                    if sender.id not in FRIEND_IDS:
                         return
 
                     text = (event.message.message or "").lower()
@@ -55,7 +58,7 @@ async def start_telegram():
                     if "instagram.com" in text or "instagr.am" in text:
                         await asyncio.sleep(0.3)
                         await event.delete()
-                        print("❌ Удалено сообщение с Instagram")
+                        print(f"❌ Удалено сообщение от {sender.id}: {text}")
 
                 except Exception as e:
                     print(f"⚠️ Handler error: {e}")
@@ -74,13 +77,10 @@ async def start_telegram():
 async def main():
     print("🟡 Starting services...")
 
-    # сначала веб-сервер
     await web_server()
 
-    # потом телеграм в фоне
     asyncio.create_task(start_telegram())
 
-    # держим процесс живым
     while True:
         await asyncio.sleep(3600)
 
